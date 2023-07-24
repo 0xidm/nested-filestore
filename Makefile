@@ -6,6 +6,7 @@ help:
 requirements:
 	pip3 install -U pip
 	pip3 install -e .[dev]
+	pip3 install -e .[docs]
 
 clean:
 	find . -name '*.pyc' -delete
@@ -23,5 +24,8 @@ test-one:
 docs: var
 	rm -rf var/sphinx
 	sphinx-build -b html docs var/sphinx
+
+var:
+	mkdir -p var
 
 .PHONY: docs
