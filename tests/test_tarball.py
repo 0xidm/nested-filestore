@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from nested_filestore.tarball import TarballNestedFilestore
+from nested_filestore.tarball import TarballNestedFilestore, GzipTarballNestedFilestore
 
 
 def test_init_tarball():
@@ -17,6 +17,20 @@ def test_init_tarball():
     assert filestore.base == 10
     assert filestore.pad_character == "0"
     assert filestore.container_size == 1000
+    assert filestore.suffix == "tar"
+
+def test_init_gzip_tarball():
+    filestore = GzipTarballNestedFilestore(
+        root_path="/tmp/filestore",
+        hierarchy_order=[3, 3, 3],
+        base=10,
+    )
+    assert filestore.root_path == "/tmp/filestore"
+    assert filestore.hierarchy_order == [3, 3, 3]
+    assert filestore.base == 10
+    assert filestore.pad_character == "0"
+    assert filestore.container_size == 1000
+    assert filestore.suffix == "tgz"
 
 def test_tarball_workflow(gzip_tarball_filestore):
     # ensure the test file does not exist before we start
