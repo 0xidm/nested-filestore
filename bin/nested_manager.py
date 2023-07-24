@@ -7,7 +7,7 @@ import logging
 
 import click
 
-from nested_filestore.tarball import TarballNestedFilestore
+from nested_filestore.tarball import GzipTarballNestedFilestore
 
 
 @click.group()
@@ -18,7 +18,7 @@ def cli():
 @click.argument('filestore', type=str)
 def upgrade_to_tarball(filestore):
     "Upgrade a NestedFilestore to a TarballNestedFilestore"
-    filestore = TarballNestedFilestore(
+    filestore = GzipTarballNestedFilestore(
         root_path=os.path.expanduser(filestore),
         hierarchy_order=[3, 3, 3],
     )

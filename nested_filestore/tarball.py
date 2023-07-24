@@ -17,6 +17,7 @@ class TarballHelper:
         self.tarball_exists_cache = set()
         self.container_size = self.base ** self.hierarchy_order[0]
         self.tar_lock = threading.Lock()
+        self.suffix = "tar"
 
     def container_full(self, index):
         "is the container that contains this index full?"
@@ -41,7 +42,7 @@ class TarballHelper:
         container_path = os.path.dirname(filename)
         container_container = os.path.dirname(container_path)
 
-        tarball_filename = os.path.join(container_container, f"{container_id}.tgz")
+        tarball_filename = os.path.join(container_container, f"{container_id}.{self.suffix}")
         return tarball_filename
 
     def tarball_exists(self, index):
@@ -56,6 +57,9 @@ class TarballHelper:
         if tarball_filename in self.tarball_exists_cache:
             return True
 
+    def _tarfile_open(self, filename):
+        return tarfile.open(filename, mode="w")
+
     def tarball_create(self, index):
         "create a tarball for the container path that contains this index"
         tarball_filename = self.tarball_for_index(index)
@@ -66,7 +70,7 @@ class TarballHelper:
 
         filenames_to_remove = []
         # iterate files in the container path and add them to the tarball
-        with tarfile.open(tarball_filename, mode="w:gz") as tarball:
+        with self._tarfile_open(tarball_filename) as tarball:
             for filename in sorted(os.listdir(full_container_path)):
                 full_filename = os.path.join(self.root_path, container_path, filename)
                 tarball.add(
@@ -160,3 +164,11 @@ class TarballNestedFilestore(TarballHelper, NestedFilestore):
 
         # otherwise, pass to the superclass to handle as a normal file
         return super().resolve(index)
+
+class GzipTarballNestedFilestore(TarballNestedFilestore):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.suffix = "tgz"
+
+    def _tarfile_open(self, filename):
+        return tarfile.open(filename, mode="w:gz")

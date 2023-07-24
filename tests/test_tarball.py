@@ -18,63 +18,63 @@ def test_init_tarball():
     assert filestore.pad_character == "0"
     assert filestore.container_size == 1000
 
-def test_tarball_workflow(tarball_filestore):
+def test_tarball_workflow(gzip_tarball_filestore):
     # ensure the test file does not exist before we start
-    assert not tarball_filestore.exists(12345678)
-    tarball_filestore.put(12345678, "tests/data/12345678.bin")
-    assert tarball_filestore.exists(12345678)
-    with tarball_filestore.get(12345678) as f:
+    assert not gzip_tarball_filestore.exists(12345678)
+    gzip_tarball_filestore.put(12345678, "tests/data/12345678.bin")
+    assert gzip_tarball_filestore.exists(12345678)
+    with gzip_tarball_filestore.get(12345678) as f:
         assert f.read() == b"hi"
 
-def test_little_tarball(tarball_little_filestore):
-    assert tarball_little_filestore.container_size == 10
+def test_little_tarball(gzip_tarball_little_filestore):
+    assert gzip_tarball_little_filestore.container_size == 10
 
-def test_tarball_create(tarball_little_filestore):
-    assert not tarball_little_filestore.container_full(0)
+def test_tarball_create(gzip_tarball_little_filestore):
+    assert not gzip_tarball_little_filestore.container_full(0)
 
     for i in range(0, 9):
-        tarball_little_filestore.put(i, "tests/data/12345678.bin")
-        assert not tarball_little_filestore.container_full(i)
+        gzip_tarball_little_filestore.put(i, "tests/data/12345678.bin")
+        assert not gzip_tarball_little_filestore.container_full(i)
     
-    tarball_little_filestore.put(9, "tests/data/12345678.bin")
-    assert tarball_little_filestore.container_full(9)
+    gzip_tarball_little_filestore.put(9, "tests/data/12345678.bin")
+    assert gzip_tarball_little_filestore.container_full(9)
 
     for i in range(10, 19):
-        tarball_little_filestore.put(i, "tests/data/12345678.bin")
-        assert not tarball_little_filestore.container_full(i)
+        gzip_tarball_little_filestore.put(i, "tests/data/12345678.bin")
+        assert not gzip_tarball_little_filestore.container_full(i)
 
-    tarball_little_filestore.put(19, "tests/data/12345678.bin")
-    assert tarball_little_filestore.container_full(19)
+    gzip_tarball_little_filestore.put(19, "tests/data/12345678.bin")
+    assert gzip_tarball_little_filestore.container_full(19)
 
-    tarball_little_filestore.tarball_scan()
+    gzip_tarball_little_filestore.tarball_scan()
 
     assert os.path.exists("/tmp/filestore/0/0.tgz")
     assert os.path.exists("/tmp/filestore/0/1.tgz")
 
-    tarball_little_filestore.put(20, "tests/data/12345678.bin")
+    gzip_tarball_little_filestore.put(20, "tests/data/12345678.bin")
     assert os.path.exists("/tmp/filestore/0/2/20.bin")
 
-def test_tarball_get(tarball_little_filestore):
+def test_tarball_get(gzip_tarball_little_filestore):
     for i in range(0, 9):
-        tarball_little_filestore.put(i, "tests/data/12345678.bin")
-        assert not tarball_little_filestore.container_full(i)
-    tarball_little_filestore.put(9, "tests/data/12345679.bin")
-    tarball_little_filestore.put(10, "tests/data/12345679.bin")
-    tarball_little_filestore.put(11, "tests/data/12345678.bin")
+        gzip_tarball_little_filestore.put(i, "tests/data/12345678.bin")
+        assert not gzip_tarball_little_filestore.container_full(i)
+    gzip_tarball_little_filestore.put(9, "tests/data/12345679.bin")
+    gzip_tarball_little_filestore.put(10, "tests/data/12345679.bin")
+    gzip_tarball_little_filestore.put(11, "tests/data/12345678.bin")
 
-    tarball_little_filestore.tarball_scan()
+    gzip_tarball_little_filestore.tarball_scan()
     assert os.path.exists("/tmp/filestore/0/0.tgz")
 
     # get an index that is in the tarball
-    with tarball_little_filestore.get(1) as f:
+    with gzip_tarball_little_filestore.get(1) as f:
         assert f.read() == b"hi"
 
     # this is in the tarball with different content
-    with tarball_little_filestore.get(9) as f:
+    with gzip_tarball_little_filestore.get(9) as f:
         assert f.read() == b"bye"
 
     # this one is not inside a tarball
-    with tarball_little_filestore.get(10) as f:
+    with gzip_tarball_little_filestore.get(10) as f:
         assert f.read() == b"bye"
 
 def test_tarball_tiny_get():
@@ -92,13 +92,13 @@ def test_tarball_tiny_get():
         with tarball_tiny_filestore.get(i) as f:
             assert f.read() == b"hi"
 
-def test_scan(tarball_little_filestore):
+def test_scan(gzip_tarball_little_filestore):
     for i in range(0, 39):
-        tarball_little_filestore.put(i, "tests/data/12345678.bin")
+        gzip_tarball_little_filestore.put(i, "tests/data/12345678.bin")
 
     assert not os.path.exists("/tmp/filestore/0/0.tgz")
 
-    tarball_little_filestore.tarball_scan()
+    gzip_tarball_little_filestore.tarball_scan()
     assert os.path.exists("/tmp/filestore/0/0.tgz")
     assert os.path.exists("/tmp/filestore/0/1.tgz")
     assert os.path.exists("/tmp/filestore/0/2.tgz")

@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from nested_filestore import NestedFilestore
-from nested_filestore.tarball import TarballNestedFilestore
+from nested_filestore.tarball import TarballNestedFilestore, GzipTarballNestedFilestore
 
 
 @pytest.fixture()
@@ -21,3 +21,13 @@ def tarball_filestore():
 def tarball_little_filestore():
     shutil.rmtree("/tmp/filestore", ignore_errors=True)
     return TarballNestedFilestore("/tmp/filestore", [1, 1, 1])
+
+@pytest.fixture()
+def gzip_tarball_filestore():
+    shutil.rmtree("/tmp/filestore", ignore_errors=True)
+    return GzipTarballNestedFilestore("/tmp/filestore", [3, 3, 3])
+
+@pytest.fixture()
+def gzip_tarball_little_filestore():
+    shutil.rmtree("/tmp/filestore", ignore_errors=True)
+    return GzipTarballNestedFilestore("/tmp/filestore", [1, 1, 1])
