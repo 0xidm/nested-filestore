@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     version='0.1.0',
-    name='Nested Filestore',
+    name='nested-filestore',
     description="Nested Filestore",
     packages=[
         'nested_filestore',
