@@ -25,3 +25,9 @@ Finally, the root node will be grouped into containers containing 10^1 files eac
    assert filestore.exists(0)
    with filestore.get(0) as f:
       print(f.read())
+
+Online resources
+----------------
+
+- `Github repository <https://github.com/0xidm/nested-filestore>`_
+- `Documentation <https://nested-filestore.readthedocs.org>`_
