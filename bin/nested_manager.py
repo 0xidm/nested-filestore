@@ -24,6 +24,16 @@ def upgrade_to_tarball(filestore):
     )
     filestore.tarball_scan()
 
+@cli.command()
+@click.argument('input_filestore', type=str)
+@click.argument('output_filestore', type=str)
+def ingest(input_filestore, output_filestore):
+    "Import a NestedFilestore into a GzipTarballNestedFilestore"
+    filestore = GzipTarballNestedFilestore(
+        root_path=os.path.expanduser(output_filestore),
+        hierarchy_order=[3, 3, 3],
+    )
+    filestore.ingest_filesystem(input_filestore)
 
 if __name__ == "__main__":
     # init_logger(level=os.getenv("LOG_LEVEL", "INFO"))

@@ -110,3 +110,13 @@ class NestedFilestore:
     def largest_id(self):
         self._cache_file_list()
         return self.index_cache[-1]
+
+    def ingest_filesystem(self, filestore_path):
+        "low-level filesystem scan of filestore_path for .bin files, which it imports"
+
+        file_list = glob.glob(os.path.join(filestore_path, "**/*.bin"), recursive=True)
+        for filename in sorted(file_list):
+            match = re.search(r'([^/]+).bin', filename)
+            if match:
+                index = int(match.group(1))
+                self.put(index, filename=filename, move=True)
