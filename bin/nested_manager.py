@@ -34,6 +34,7 @@ def ingest(input_filestore, output_filestore):
         hierarchy_order=[3, 3, 3],
     )
     filestore.ingest_filesystem(input_filestore)
+    filestore.tarball_scan()
 
 if __name__ == "__main__":
     # init_logger(level=os.getenv("LOG_LEVEL", "INFO"))
