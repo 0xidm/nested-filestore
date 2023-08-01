@@ -53,3 +53,8 @@ def test_get_item():
     assert i.get_item(19)
     assert i.get_item(420)
     assert pytest.raises(ValueError, i.get_item, 421)
+
+def test_missing():
+    i = Index(path="tests/data/filestore-1-1-1", dimensions=[1,1,1])
+    i.sync()
+    assert len(list(i.missing)) > 400

@@ -4,7 +4,6 @@ import glob
 import logging
 import datetime
 
-from .utils import SortedDict
 from .group import Group
 
 
@@ -14,7 +13,7 @@ class Index:
         self.dimensions = dimensions
         self.base = 10
         self.pad_character = pad_character
-        self.groups = SortedDict()
+        self.groups = dict()
 
     def get_group(self, group_uri):
         "given a group uri, return the group object"
@@ -100,3 +99,9 @@ class Index:
             return group.exists(identifier)
         except ValueError:
             return False
+
+    @property
+    def missing(self):
+        for idx in range(int(self.min), int(self.max)):
+            if not self.exists(idx):
+                yield idx
