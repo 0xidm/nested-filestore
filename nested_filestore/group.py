@@ -5,7 +5,7 @@ from .item import Item
 
 class Group:
     def __init__(self, index, identifier, parent=None, is_tarball=None):
-        self.identifier = identifier
+        self.identifier = str(identifier)
         self.index = index
         self.parent = parent
 
@@ -28,9 +28,11 @@ class Group:
             self._is_tarball = None
 
     def add_item(self, identifier):
-        self._items[str(identifier)] = Item(self, str(identifier))
+        identifier = str(identifier)
+        self._items[identifier] = Item(self, identifier)
 
     def get_item(self, identifier):
+        identifier = str(identifier)
         if self.exists(identifier):
             return self.items[str(identifier)]
         else:
@@ -73,4 +75,5 @@ class Group:
         return self.identifier
 
     def exists(self, identifier):
-        return str(identifier) in self._items
+        identifier = str(identifier)
+        return identifier in self._items

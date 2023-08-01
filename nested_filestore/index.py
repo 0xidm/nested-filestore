@@ -24,6 +24,7 @@ class Index:
     
     def get_item(self, identifier):
         "given an identifier, return the item object"
+        identifier = str(identifier)
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
@@ -93,6 +94,7 @@ class Index:
 
     def exists(self, identifier):
         # determine which group should contain the item with the given identifier
+        identifier = str(identifier)
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
