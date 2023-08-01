@@ -8,12 +8,14 @@ from .group import Group
 
 
 class Index:
-    def __init__(self, path, dimensions, pad_character="0", base=10):
+    def __init__(self, path, dimensions, pad_character="0", base=10, sync=True):
         self.path = path
         self.dimensions = dimensions
         self.base = 10
         self.pad_character = pad_character
         self.groups = dict()
+        if sync:
+            self.sync()
 
     def get_group(self, group_uri):
         "given a group uri, return the group object"
@@ -22,13 +24,13 @@ class Index:
         else:
             raise ValueError(f"{group_uri} not found in {self}")
     
-    def get_item(self, identifier):
+    def get(self, identifier):
         "given an identifier, return the item object"
         identifier = str(identifier)
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
-            return group.get_item(identifier)
+            return group.get(identifier)
         except ValueError:
             raise ValueError(f"{identifier} not found in {self}")
     
@@ -45,7 +47,7 @@ class Index:
             subdir = os.path.dirname(binfile)
             if subdir not in self.groups:
                 self.groups[subdir] = Group(self, subdir)
-            self.groups[subdir].add_item(identifier)
+            self.groups[subdir].add(identifier)
 
         # # then locate .tgz files
         for tarball in glob.glob(f'{self.path}/**/*.tgz', recursive=True):

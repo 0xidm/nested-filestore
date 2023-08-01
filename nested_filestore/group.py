@@ -4,34 +4,32 @@ from .item import Item
 
 
 class Group:
-    def __init__(self, index, identifier, parent=None, is_tarball=None):
+    def __init__(self, index, identifier, is_tarball=None):
         self.identifier = str(identifier)
         self.index = index
-        self.parent = parent
 
         # determine min and max from index dimensions and identifier
         group_name = identifier.replace("/", "")
-        self.bucket_size = self.index.base ** self.index.dimensions[0]
-        self.bucket_min = int(group_name) * self.bucket_size
-        self.bucket_max = self.bucket_min + self.bucket_size
+        self._bucket_size = self.index.base ** self.index.dimensions[0]
+        self._bucket_min = int(group_name) * self._bucket_size
+        self._bucket_max = self._bucket_min + self._bucket_size
 
         self._is_full = False
         self._is_tarball = is_tarball
-        self._tarball_filename = None
         self._items = dict()
 
-        if self._is_tarball is True:
-            for idx in range(self.bucket_min, self.bucket_max):
-                self._items[str(idx)] = Item(self, str(idx))
-
-    def add_item(self, identifier):
+    def add(self, identifier):
         identifier = str(identifier)
         self._items[identifier] = Item(self, identifier)
 
-    def get_item(self, identifier):
+    def get(self, identifier):
         identifier = str(identifier)
-        if self.exists(identifier):
-            return self.items[str(identifier)]
+        if self.is_tarball:
+            if identifier not in self._items:
+                self._items[identifier] = Item(self, identifier)
+            return self._items[identifier]
+        elif self.exists(identifier):
+            return self.items[identifier]
         else:
             raise ValueError(f"{identifier} not found in {self}")
 
@@ -42,26 +40,38 @@ class Group:
     @property
     def is_tarball(self):
         if self._is_tarball is None:
-            self._is_tarball = os.path.isfile(self.path + ".tgz")
+            self._is_tarball = os.path.isfile(self._path_tgz)
         return self._is_tarball
 
     @property
     def uri(self):
-        if self.parent:
-            return os.path.join(self.parent.path, self.identifier)
-        else:
-            return self.identifier
+        return self.identifier
 
     @property
     def path(self):
-        return os.path.join(self.index.path, self.uri)
+        if self._is_tarball:
+            return self._path_tgz
+        else:
+            return self._path_dir
+
+    @property
+    def _path_dir(self):
+        return f"{self.index.path}{self.uri}"
+
+    @property
+    def _path_tgz(self):
+        return f"{self.index.path}{self.uri}.tgz"
 
     @property
     def min(self):
+        if self.is_tarball:
+            return str(self._bucket_min)
         return self.items[next(iter(sorted(self.items)))].identifier
 
     @property
     def max(self):
+        if self.is_tarball:
+            return str(self._bucket_max)
         return self.items[next(reversed(sorted(self.items)))].identifier
 
     @property
@@ -72,5 +82,7 @@ class Group:
         return self.identifier
 
     def exists(self, identifier):
+        if self.is_tarball:
+            return True
         identifier = str(identifier)
         return identifier in self._items
