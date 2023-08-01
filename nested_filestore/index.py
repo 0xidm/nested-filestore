@@ -44,7 +44,7 @@ class Index:
             identifier = os.path.basename(binfile)
             subdir = os.path.dirname(binfile)
             if subdir not in self.groups:
-                self.groups[subdir] = (Group(self, subdir))
+                self.groups[subdir] = Group(self, subdir)
             self.groups[subdir].add_item(identifier)
 
         # # then locate .tgz files
@@ -52,7 +52,7 @@ class Index:
             tarball = tarball.replace(self.path, "")
             tarball = tarball.replace(".tgz", "")
             if tarball not in self.groups:
-                self.groups[tarball] = (Group(self, tarball, is_tarball=True))
+                self.groups[tarball] = Group(self, tarball, is_tarball=True)
 
     def __repr__(self):
         return f"Index({self.path})"

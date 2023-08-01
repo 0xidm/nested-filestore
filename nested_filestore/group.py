@@ -18,7 +18,7 @@ class Group:
             group_name = identifier.replace("/", "")
 
             # determine min and max from index dimensions and identifier
-            bucket_size = self.index.base ^ self.index.dimensions[0]
+            bucket_size = self.index.base ** self.index.dimensions[0]
             min_bucket = int(group_name) * bucket_size - 1
             max_bucket = min_bucket + bucket_size - 1
 
