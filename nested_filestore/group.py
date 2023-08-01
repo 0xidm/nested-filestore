@@ -9,23 +9,20 @@ class Group:
         self.index = index
         self.parent = parent
 
+        # determine min and max from index dimensions and identifier
+        group_name = identifier.replace("/", "")
+        self.bucket_size = self.index.base ** self.index.dimensions[0]
+        self.bucket_min = int(group_name) * self.bucket_size
+        self.bucket_max = self.bucket_min + self.bucket_size
+
         self._is_full = False
+        self._is_tarball = is_tarball
         self._tarball_filename = None
         self._items = dict()
 
-        if is_tarball is True:
-            self._is_tarball = True
-            group_name = identifier.replace("/", "")
-
-            # determine min and max from index dimensions and identifier
-            bucket_size = self.index.base ** self.index.dimensions[0]
-            min_bucket = int(group_name) * bucket_size - 1
-            max_bucket = min_bucket + bucket_size - 1
-
-            for idx in range(min_bucket, max_bucket):
+        if self._is_tarball is True:
+            for idx in range(self.bucket_min, self.bucket_max):
                 self._items[str(idx)] = Item(self, str(idx))
-        else:
-            self._is_tarball = None
 
     def add_item(self, identifier):
         identifier = str(identifier)

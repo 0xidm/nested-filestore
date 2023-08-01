@@ -58,3 +58,11 @@ def test_missing():
     i = Index(path="tests/data/filestore-1-1-1", dimensions=[1,1,1])
     i.sync()
     assert len(list(i.missing)) > 400
+
+def test_tarball_fill():
+    i = Index(path="tests/data/filestore-3-3-3", dimensions=[3,3,3])
+    i.sync()
+    assert i.min == '0'
+    assert i.max == '2000'
+    assert i.get_group("/000/000").is_tarball
+    assert not i.get_group("/000/002").is_tarball
