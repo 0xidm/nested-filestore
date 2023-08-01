@@ -4,7 +4,7 @@ import glob
 import logging
 import datetime
 
-from functools import cache
+from functools import lru_cache
 
 from .group import Group
 
@@ -71,7 +71,7 @@ class Index:
         max_group = self.groups[next(reversed(sorted(self.groups)))]
         return max_group.max
 
-    @cache
+    @lru_cache(maxsize=None)
     def which_group(self, identifier):
         "based on the hierarchy order, return a tuple of the path components for the given identifier"
         identifier_str = str(identifier)
