@@ -29,7 +29,7 @@ class Group:
                 self._items[identifier] = Item(self, identifier)
             return self._items[identifier]
         elif self.exists(identifier):
-            return self.items[identifier]
+            return self._items[identifier]
         else:
             raise ValueError(f"{identifier} not found in {self}")
 
