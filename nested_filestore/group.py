@@ -1,13 +1,16 @@
 import os
 import tarfile
 import threading
+from functools import cached_property
+
+import ratarmountcore as rmc
 
 from .item import Item
 from .exceptions import GroupNotFullError
 
 
 class Group:
-    def __init__(self, index, identifier, is_tarball=None):
+    def __init__(self, index, identifier:str, is_tarball=None):
         self.identifier = str(identifier)
         self.index = index
 
@@ -19,13 +22,14 @@ class Group:
 
         self._is_tarball = is_tarball
         self._tar_lock = threading.Lock()
+        self._tar_rmc = None
         self._items = dict()
 
-    def add(self, identifier):
+    def add(self, identifier:str):
         identifier = str(identifier)
         self._items[identifier] = Item(self, identifier)
 
-    def get(self, identifier):
+    def get(self, identifier:str):
         identifier = str(identifier)
         if self.is_tarball:
             if identifier not in self._items:
@@ -35,6 +39,12 @@ class Group:
             return self._items[identifier]
         else:
             raise ValueError(f"{identifier} not found in {self}")
+
+    @cached_property
+    def _ratarmount(self):
+        if self._tar_rmc is None:
+            self._tar_rmc = rmc.open(self._path_tgz, recursive=True)
+        return self._tar_rmc
 
     @property
     def is_full(self):
@@ -46,7 +56,7 @@ class Group:
             self._is_tarball = os.path.isfile(self._path_tgz)
         return self._is_tarball
 
-    @property
+    @cached_property
     def uri(self):
         return self.identifier
 
@@ -57,11 +67,11 @@ class Group:
         else:
             return self._path_dir
 
-    @property
+    @cached_property
     def _path_dir(self):
         return f"{self.index.path}{self.uri}"
 
-    @property
+    @cached_property
     def _path_tgz(self):
         return f"{self.index.path}{self.uri}.tgz"
 
@@ -84,11 +94,10 @@ class Group:
     def __repr__(self):
         return self.identifier
 
-    def exists(self, identifier):
+    def exists(self, identifier:str):
         if self.is_tarball:
             return True
-        identifier = str(identifier)
-        return identifier in self._items
+        return str(identifier) in self._items
 
     def compact(self):
         "create a tarball for this group"

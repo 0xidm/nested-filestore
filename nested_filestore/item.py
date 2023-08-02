@@ -1,7 +1,5 @@
 import os
 
-import ratarmountcore as rmc
-
 
 class Item:
     def __init__(self, group, identifier):
@@ -10,7 +8,7 @@ class Item:
 
     def open(self):
         if self.inside_tarball:
-            tarball = rmc.open(self.group._path_tgz, recursive=True)
+            tarball = self.group._ratarmount
             info = tarball.getFileInfo(f"{self.uri}.bin")
             return tarball.open(info)
         else:
