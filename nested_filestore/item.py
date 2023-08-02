@@ -11,6 +11,8 @@ class Item:
         if self.inside_tarball:
             tarball = self.group._ratarmount
             info = tarball.getFileInfo(f"{self.uri}.bin")
+            if info is None:
+                raise FileNotFoundError(f"{self.uri}.bin not found inside tarball")
             return tarball.open(info)
         else:
             retries = 0
