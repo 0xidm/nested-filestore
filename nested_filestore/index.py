@@ -141,7 +141,7 @@ class Index:
         dst_group.add(new_item)
 
         if filehandle:
-            return open(new_item._path_dir, "wb")
+            return open(new_item.path, "wb")
         elif filename:
             if move:
                 shutil.move(filename, new_item.path)
