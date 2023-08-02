@@ -1,7 +1,9 @@
 import os
 import tarfile
+import threading
 
 from .item import Item
+from .exceptions import GroupNotFullError
 
 
 class Group:
@@ -16,6 +18,7 @@ class Group:
         self._bucket_max = self._bucket_min + self._bucket_size
 
         self._is_tarball = is_tarball
+        self._tar_lock = threading.Lock()
         self._items = dict()
 
     def add(self, identifier):
@@ -96,26 +99,29 @@ class Group:
         container_path = self.uri
         full_container_path = self._path_dir
 
-        filenames_to_remove = []
+        with self._tar_lock:
+            filenames_to_remove = []
 
-        # iterate files in the container path and add them to the tarball
-        with tarfile.open(tarball_filename, mode="w") as tarball:
-            for filename in sorted(os.listdir(full_container_path)):
-                full_filename = os.path.join(full_container_path, filename)
-                tarball.add(
-                    full_filename,
-                    arcname=os.path.join(container_path, filename),
-                    recursive=False
-                )
-                filenames_to_remove.append(full_filename)
+            # iterate files in the container path and add them to the tarball
+            with tarfile.open(tarball_filename, mode="w") as tarball:
+                for filename in sorted(os.listdir(full_container_path)):
+                    full_filename = os.path.join(full_container_path, filename)
+                    tarball.add(
+                        full_filename,
+                        arcname=os.path.join(container_path, filename),
+                        recursive=False
+                    )
+                    filenames_to_remove.append(full_filename)
 
-            # ensure the right number of files are now in the tarball
-            if len(tarball.getmembers()) != len(os.listdir(full_container_path)):
-                raise ValueError(f"tarball {tarball_filename} contains different number of files than container path")
+                # ensure the right number of files are now in the tarball
+                if len(tarball.getmembers()) != len(os.listdir(full_container_path)):
+                    raise ValueError(f"tarball {tarball_filename} contains different number of files than container path")
 
-        # iterate files again and delete them
-        for full_filename in filenames_to_remove:
-            os.remove(full_filename)
-        os.rmdir(full_container_path)
+            # iterate files again and delete them
+            for full_filename in filenames_to_remove:
+                os.remove(full_filename)
+            os.rmdir(full_container_path)
 
+
+        self._is_tarball = True
         return True

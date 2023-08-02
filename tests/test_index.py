@@ -59,7 +59,7 @@ def test_missing():
 def test_tarball_fill():
     i = Index(path="tests/data/filestore-3-3-3", dimensions=[3,3,3])
     assert i.min == '0'
-    assert i.max == '2000'
+    assert i.max == '123456789'
     assert i.get_group("/000/000").is_tarball
     assert not i.get_group("/000/002").is_tarball
 
@@ -76,7 +76,7 @@ def test_index_workflow(index_filestore):
 
     index_filestore.put(12345678, "tests/data/12345678.bin")
     assert index_filestore.exists(12345678)
-    with index_filestore.get(12345678) as f:
+    with index_filestore.get(12345678).open() as f:
         assert f.read() == b"hi"
 
 def test_index_full(little_index_filestore):

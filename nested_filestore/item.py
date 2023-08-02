@@ -8,10 +8,10 @@ class Item:
         self.group = group
         self.identifier = str(identifier)
 
-    def get(self):
+    def open(self):
         if self.inside_tarball:
-            tarball = rmc.open(self.group.path_tgz, recursive=True)
-            info = tarball.getFileInfo(self.path)
+            tarball = rmc.open(self.group._path_tgz, recursive=True)
+            info = tarball.getFileInfo(f"{self.uri}.bin")
             return tarball.open(info)
         else:
             return open(self.path, "rb")

@@ -7,6 +7,7 @@ import datetime
 
 from functools import lru_cache
 
+from .exceptions import GroupNotFullError
 from .group import Group
 from .item import Item
 
@@ -27,14 +28,13 @@ class Index:
             return self.groups[group_uri]
         else:
             raise ValueError(f"{group_uri} not found in {self}")
-    
-    def get(self, identifier):
-        "given an identifier, return the item object"
-        identifier = str(identifier)
+
+    def get(self, identifier:str):
+        "given an identifier, return the item file handle; or optionally the item object"
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
-            return group.get(identifier).get()
+            return group.get(identifier)
         except ValueError:
             raise ValueError(f"{identifier} not found in {self}")
     
@@ -151,7 +151,11 @@ class Index:
         else:
             raise ValueError("either filename or filehandle must be specified.")
 
-    def writer(self, identifier, overwrite=False):
-        "given an identifier, return a writable file handle pointing to the file UNLESS it exists"
-        return self.put(identifier, filehandle=True, overwrite=overwrite)
-    
+    def compact(self, identifier):
+        "given an identifier, try to compact the group its group, ignoring GroupNotFullError"
+        group_uri = self.index.which_group(identifier)
+        group = self.index.get_group(group_uri)
+        try:
+            group.compact()
+        except GroupNotFullError:
+            pass
