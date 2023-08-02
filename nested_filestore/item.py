@@ -1,4 +1,5 @@
 import os
+import time
 
 
 class Item:
@@ -12,7 +13,15 @@ class Item:
             info = tarball.getFileInfo(f"{self.uri}.bin")
             return tarball.open(info)
         else:
-            return open(self.path, "rb")
+            retries = 0
+            while True:
+                try:
+                    return open(self.path, "rb")
+                except FileNotFoundError:
+                    if retries > 100:
+                        raise FileNotFoundError(f"{self.path} not found")
+                    retries += 1
+                    time.sleep(0.1)
 
     def __repr__(self):
         return self.identifier

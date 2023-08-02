@@ -48,7 +48,16 @@ class Group:
 
     @property
     def is_full(self):
-        return not self.is_tarball and len(self._items) >= self._bucket_size
+        if self.is_tarball:
+            return False
+        else:
+            if len(self._items) >= self._bucket_size:
+                # check that all files have size greater than zero
+                for item in self._items.values():
+                    filename = item.path
+                    if os.path.getsize(filename) == 0:
+                        return False
+                return True
 
     @property
     def is_tarball(self):
@@ -102,17 +111,19 @@ class Group:
     def compact(self):
         "create a tarball for this group"
         if not self.is_full:
-            raise ValueError(f"cannot compact non-full group {self}")
+            raise GroupNotFullError(f"cannot compact non-full group {self}")
 
         tarball_filename = self._path_tgz
         container_path = self.uri
         full_container_path = self._path_dir
 
         with self._tar_lock:
-            filenames_to_remove = []
+            if self._is_tarball is True:
+                return False
 
             # iterate files in the container path and add them to the tarball
-            with tarfile.open(tarball_filename, mode="w") as tarball:
+            filenames_to_remove = []
+            with tarfile.open(tarball_filename, mode="w:gz") as tarball:
                 for filename in sorted(os.listdir(full_container_path)):
                     full_filename = os.path.join(full_container_path, filename)
                     tarball.add(
@@ -131,6 +142,6 @@ class Group:
                 os.remove(full_filename)
             os.rmdir(full_container_path)
 
+            self._is_tarball = True
 
-        self._is_tarball = True
         return True

@@ -3,6 +3,7 @@ import re
 import glob
 import shutil
 import logging
+import threading
 import datetime
 
 from functools import lru_cache
@@ -19,6 +20,7 @@ class Index:
         self.base = 10
         self.pad_character = pad_character
         self.groups = dict()
+        self._mkdir_lock = threading.Lock()
         if sync:
             self.sync()
 
@@ -125,15 +127,16 @@ class Index:
 
         # if group does not already exist, create it
         if dst_group_uri not in self.groups:
-            dst_group = Group(self, dst_group_uri)
-            self.groups[dst_group_uri] = dst_group
+            with self._mkdir_lock:
+                self.groups[dst_group_uri] = Group(self, dst_group_uri)
+                dst_group = self.groups[dst_group_uri]
 
-            if dst_group.is_tarball:
-                # if group is inside a tarball, raise an error for now
-                raise ValueError(f"{identifier} is inside a tarball. Cannot put.")
-            else:
-                # ensure the path exists if not tarball
-                os.makedirs(dst_group._path_dir, exist_ok=True)
+                if dst_group.is_tarball:
+                    # if group is inside a tarball, raise an error for now
+                    raise ValueError(f"{identifier} is inside a tarball. Cannot put.")
+                else:
+                    # ensure the path exists if not tarball
+                    os.makedirs(dst_group._path_dir, exist_ok=True)
         else:
             dst_group = self.groups[dst_group_uri]
 
@@ -153,8 +156,8 @@ class Index:
 
     def compact(self, identifier):
         "given an identifier, try to compact the group its group, ignoring GroupNotFullError"
-        group_uri = self.index.which_group(identifier)
-        group = self.index.get_group(group_uri)
+        group_uri = self.which_group(identifier)
+        group = self.get_group(group_uri)
         try:
             group.compact()
         except GroupNotFullError:
