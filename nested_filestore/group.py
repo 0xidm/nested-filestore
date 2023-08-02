@@ -1,4 +1,5 @@
 import os
+import tarfile
 
 from .item import Item
 
@@ -14,7 +15,6 @@ class Group:
         self._bucket_min = int(group_name) * self._bucket_size
         self._bucket_max = self._bucket_min + self._bucket_size
 
-        self._is_full = False
         self._is_tarball = is_tarball
         self._items = dict()
 
@@ -35,7 +35,7 @@ class Group:
 
     @property
     def is_full(self):
-        return self._is_full
+        return not self.is_tarball and len(self._items) >= self._bucket_size
 
     @property
     def is_tarball(self):
@@ -86,3 +86,36 @@ class Group:
             return True
         identifier = str(identifier)
         return identifier in self._items
+
+    def compact(self):
+        "create a tarball for this group"
+        if not self.is_full:
+            raise ValueError(f"cannot compact non-full group {self}")
+
+        tarball_filename = self._path_tgz
+        container_path = self.uri
+        full_container_path = self._path_dir
+
+        filenames_to_remove = []
+
+        # iterate files in the container path and add them to the tarball
+        with tarfile.open(tarball_filename, mode="w") as tarball:
+            for filename in sorted(os.listdir(full_container_path)):
+                full_filename = os.path.join(full_container_path, filename)
+                tarball.add(
+                    full_filename,
+                    arcname=os.path.join(container_path, filename),
+                    recursive=False
+                )
+                filenames_to_remove.append(full_filename)
+
+            # ensure the right number of files are now in the tarball
+            if len(tarball.getmembers()) != len(os.listdir(full_container_path)):
+                raise ValueError(f"tarball {tarball_filename} contains different number of files than container path")
+
+        # iterate files again and delete them
+        for full_filename in filenames_to_remove:
+            os.remove(full_filename)
+        os.rmdir(full_container_path)
+
+        return True

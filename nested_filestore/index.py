@@ -1,12 +1,14 @@
 import os
 import re
 import glob
+import shutil
 import logging
 import datetime
 
 from functools import lru_cache
 
 from .group import Group
+from .item import Item
 
 
 class Index:
@@ -32,7 +34,7 @@ class Index:
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
-            return group.get(identifier)
+            return group.get(identifier).get()
         except ValueError:
             raise ValueError(f"{identifier} not found in {self}")
     
@@ -112,3 +114,44 @@ class Index:
         for idx in range(int(self.min), int(self.max)):
             if not self.exists(idx):
                 yield idx
+
+    def put(self, identifier, filename=None, filehandle=False, move=False, overwrite=False):
+        "given the path to an existing file, and given an identifier, copy the file to the file store and put it in the right place, creating directories as needed."
+
+        if not overwrite and self.exists(identifier):
+            raise ValueError(f"{identifier} already exists.")
+
+        dst_group_uri = self.which_group(identifier)
+
+        # if group does not already exist, create it
+        if dst_group_uri not in self.groups:
+            dst_group = Group(self, dst_group_uri)
+            self.groups[dst_group_uri] = dst_group
+
+            if dst_group.is_tarball:
+                # if group is inside a tarball, raise an error for now
+                raise ValueError(f"{identifier} is inside a tarball. Cannot put.")
+            else:
+                # ensure the path exists if not tarball
+                os.makedirs(dst_group._path_dir, exist_ok=True)
+        else:
+            dst_group = self.groups[dst_group_uri]
+
+        new_item = Item(dst_group, identifier)
+        dst_group.add(new_item)
+
+        if filehandle:
+            return open(new_item._path_dir, "wb")
+        elif filename:
+            if move:
+                shutil.move(filename, new_item.path)
+            else:
+                shutil.copy(filename, new_item.path)
+            return new_item
+        else:
+            raise ValueError("either filename or filehandle must be specified.")
+
+    def writer(self, identifier, overwrite=False):
+        "given an identifier, return a writable file handle pointing to the file UNLESS it exists"
+        return self.put(identifier, filehandle=True, overwrite=overwrite)
+    

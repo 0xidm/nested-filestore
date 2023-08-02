@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from nested_filestore.index import Index
@@ -65,3 +66,43 @@ def test_tarball_fill():
 def test_get():
     i = Index(path="tests/data/filestore-1-1-1", dimensions=[1,1,1])
     assert i.get(0)
+
+def test_put():
+    i = Index(path="/tmp/filestore", dimensions=[1,1,1])
+    i.put(12, "tests/data/12345678.bin")
+
+def test_index_workflow(index_filestore):
+    assert not index_filestore.exists(12345678)
+
+    index_filestore.put(12345678, "tests/data/12345678.bin")
+    assert index_filestore.exists(12345678)
+    with index_filestore.get(12345678) as f:
+        assert f.read() == b"hi"
+
+def test_index_full(little_index_filestore):
+    little_index_filestore = Index(path="/tmp/filestore", dimensions=[1,1,1])
+    item = little_index_filestore.put(0, "tests/data/12345678.bin")
+    assert not item.group.is_full
+
+    assert pytest.raises(ValueError, little_index_filestore.put, 0, "tests/data/12345678.bin")
+
+    for i in range(1, 9):
+        little_index_filestore.put(i, filename="tests/data/12345678.bin")
+    assert pytest.raises(ValueError, item.group.compact)
+
+    item = little_index_filestore.put(9, filename="tests/data/12345678.bin")
+    assert item.group.is_full
+    assert item.group.compact()
+
+    for i in range(10, 19):
+        little_index_filestore.put(i, filename="tests/data/12345678.bin")
+
+    item = little_index_filestore.put(19, filename="tests/data/12345678.bin")
+    assert item.group.is_full
+    assert item.group.compact()
+
+    assert os.path.exists("/tmp/filestore/0/0.tgz")
+    assert os.path.exists("/tmp/filestore/0/1.tgz")
+
+    little_index_filestore.put(20, filename="tests/data/12345678.bin")
+    assert os.path.exists("/tmp/filestore/0/2/20.bin")
