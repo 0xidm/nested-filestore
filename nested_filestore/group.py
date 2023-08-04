@@ -18,7 +18,7 @@ class Group:
         group_name = identifier.replace("/", "")
         self._bucket_size = self.index.base ** self.index.dimensions[0]
         self._bucket_min = int(group_name) * self._bucket_size
-        self._bucket_max = self._bucket_min + self._bucket_size
+        self._bucket_max = self._bucket_min + self._bucket_size - 1
 
         self._is_tarball = is_tarball
         self._tar_lock = threading.Lock()
@@ -32,7 +32,7 @@ class Group:
     def get(self, identifier:str):
         identifier = str(identifier)
         if self.is_tarball:
-            if identifier not in self._items:
+            if identifier not in self._items and int(identifier) <= int(self.max) and int(identifier) >= int(self.min):
                 self._items[identifier] = Item(self, identifier)
             return self._items[identifier]
         elif self.exists(identifier):
@@ -40,11 +40,16 @@ class Group:
         else:
             raise ValueError(f"{identifier} not found in {self}")
 
-    @cached_property
+    @property
     def _ratarmount(self):
         if self._tar_rmc is None:
             self._tar_rmc = rmc.open(self._path_tgz, recursive=True)
         return self._tar_rmc
+
+    def close(self):
+        "ensure tarball is closed"
+        if self._tar_rmc is not None:
+            del self._tar_rmc
 
     @property
     def is_full(self):
@@ -58,6 +63,17 @@ class Group:
                     if os.path.getsize(filename) == 0:
                         return False
                 return True
+
+    @property
+    def missing(self):
+        if self.is_tarball:
+            return []
+        else:
+            missing = []
+            for identifier in range(self.min, self.max + 1):
+                if str(identifier) not in self._items:
+                    missing.append(identifier)
+            return missing
 
     @property
     def is_tarball(self):
@@ -98,20 +114,22 @@ class Group:
 
     @property
     def items(self):
+        if len(self._items) == 0 and self.is_tarball:
+            for identifier in range(self._bucket_min, self._bucket_max + 1):
+                if str(identifier) not in self._items:
+                    self._items[str(identifier)] = Item(self, str(identifier))
         return self._items
 
     def __repr__(self):
         return self.identifier
 
     def exists(self, identifier:str):
-        if self.is_tarball:
-            return True
-        return str(identifier) in self._items
+        return str(identifier) in self.items
 
     def compact(self):
         "create a tarball for this group"
         if not self.is_full:
-            raise GroupNotFullError(f"cannot compact non-full group {self}")
+            return False
 
         tarball_filename = self._path_tgz
         container_path = self.uri
@@ -143,5 +161,31 @@ class Group:
             os.rmdir(full_container_path)
 
             self._is_tarball = True
+
+        return True
+
+    @property
+    def is_valid(self):
+        return self.validate() is True
+
+    def validate(self, raise_exception=False, debug=False):
+        # if the group is not a tarball, then it is valid
+        if not self.is_tarball:
+            return True
+        
+        # if the group is a tarball, check the tarball exists
+        if not os.path.isfile(self._path_tgz):
+            raise FileNotFoundError(f"{self._path_tgz} not found")
+        
+        # try to get every identifier that should be in this group
+        for identifier in range(self._bucket_min, self._bucket_max + 1):
+            try:
+                fh = self.get(identifier).open()
+            except Exception as e:
+                if debug:
+                    breakpoint()
+                elif raise_exception:
+                    raise e
+                return e
 
         return True

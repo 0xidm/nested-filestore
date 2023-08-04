@@ -3,12 +3,12 @@ from setuptools import setup
 setup(
     version='0.1.0',
     name='nested-filestore',
-    description="Nested Filestore",
+    description="NestedFilestore",
     packages=[
         'nested_filestore',
     ],
     scripts=[
-        'bin/nested_manager.py'
+        'bin/nested-manager.py'
     ],
     include_package_data=True,
     keywords='',

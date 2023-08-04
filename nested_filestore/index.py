@@ -32,7 +32,7 @@ class Index:
             raise ValueError(f"{group_uri} not found in {self}")
 
     def get(self, identifier:str):
-        "given an identifier, return the item file handle; or optionally the item object"
+        "given an identifier, return the item object"
         group_uri = self.which_group(identifier)
         try:
             group = self.get_group(group_uri)
@@ -61,6 +61,8 @@ class Index:
             tarball = tarball.replace(".tgz", "")
             if tarball not in self.groups:
                 self.groups[tarball] = Group(self, tarball, is_tarball=True)
+
+        self.groups = dict(sorted(self.groups.items()))
 
     def __repr__(self):
         return f"Index({self.path})"
@@ -113,7 +115,7 @@ class Index:
 
     @property
     def missing(self):
-        for idx in range(int(self.min), int(self.max)):
+        for idx in range(int(self.min), int(self.max) + 1):
             if not self.exists(idx):
                 yield idx
 
@@ -154,11 +156,24 @@ class Index:
         else:
             raise ValueError("either filename or filehandle must be specified.")
 
-    def compact(self, identifier):
+    def compact(self):
         "given an identifier, try to compact the group its group, ignoring GroupNotFullError"
-        group_uri = self.which_group(identifier)
-        group = self.get_group(group_uri)
-        try:
+        for group_uri in self.groups:
+            group = self.get_group(group_uri)
             group.compact()
-        except GroupNotFullError:
-            pass
+
+    @property
+    def is_valid(self):
+        "check that the index is valid"
+        return self.validate() is True
+
+    def validate(self, raise_exception=False, debug=False):
+        "check that the index is valid"
+        for group_uri in self.groups:
+            group = self.get_group(group_uri)
+            validation_result = group.validate(
+                raise_exception=raise_exception,
+                debug=debug
+            )
+            group.close()
+        return True
