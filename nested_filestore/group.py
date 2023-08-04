@@ -50,6 +50,7 @@ class Group:
         "ensure tarball is closed"
         if self._tar_rmc is not None:
             del self._tar_rmc
+            self._tar_rmc = None
 
     @property
     def is_full(self):
