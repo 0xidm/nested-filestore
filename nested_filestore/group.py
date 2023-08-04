@@ -184,6 +184,7 @@ class Group:
             except Exception as e:
                 if debug:
                     breakpoint()
+                    break
                 elif raise_exception:
                     raise e
                 return e

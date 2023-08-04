@@ -36,7 +36,7 @@ def validate(filestore):
     bad_groups = []
     for group_uri in filestore.index.groups:
         group = filestore.index.get_group(group_uri)
-        validation_result = group.validate()
+        validation_result = group.validate(debug=True)
         group.close()
         if validation_result is True:
             print(f"{group_uri} valid")
